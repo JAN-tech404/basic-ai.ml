@@ -1,42 +1,25 @@
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestRegressor  # NEW IMPORT
-from sklearn.metrics import mean_squared_error      # For checking accuracy
-
-# Fetch Data
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
 ticker = "TSLA"  # Let's try Tesla
 print(f"Downloading data for {ticker}...")
 data = yf.download(ticker, start="2022-01-01", end="2025-12-30")
-
-#Prepare Data
 data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
 data['Next_Close'] = data['Close'].shift(-1)
 data.dropna(inplace=True)
-
 X = data[['Open', 'High', 'Low', 'Volume']]
 y = data['Next_Close']
-
-#Split Data
 train_size = int(len(data) * 0.8)
 X_train, X_test = X.iloc[:train_size], X.iloc[train_size:]
 y_train, y_test = y.iloc[:train_size], y.iloc[train_size:]
-
-#Train Random Forest Model
 print("Training Random Forest model...")
 model = RandomForestRegressor(n_estimators=100, random_state=42)
-# n_estimators=100 means we are building 100 decision trees , random_state=42 ensures you get the same result every time you run it
 model.fit(X_train, y_train)
-
-#Predict
 predictions = model.predict(X_test)
-
-#Evaluate Accuracy
 mse = mean_squared_error(y_test, predictions)
 print(f"Mean Squared Error: {mse:.2f}")
-# A lower MSE generally means a better fit
-
-#Plot Results
 plt.figure(figsize=(14, 7))
 plt.plot(y_test.index, y_test, label='Actual Next Day Price', color='blue', alpha=0.6)
 plt.plot(y_test.index, predictions, label='Predicted (Random Forest)', color='green', linestyle='--')
