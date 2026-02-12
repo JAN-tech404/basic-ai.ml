@@ -1,36 +1,22 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-#load from seaborn library directly
 df = sns.load_dataset('iris') 
-
-#Display basic structural information
 print (f"Dataset shape: {df.shape}")
 print (f"Dataset columns: {df.columns.tolist()}")
 print("First 6 rows of the dataset:")
 print(df.head(6))
-  
-#provide data types and check for null values
 print("\nDataset info: ")
 print(df.info())
-  
-#calculates count,mean etc
 print("\nStatistical summary: ")
 print(df.describe())
-
-#creates a grid of scatter plots, and colors the data points
 sns.pairplot(df, hue='species',height=2.5)
 plt.suptitle("Pairplot of Iris Features", y=1.02)
 plt.show()
-
-#uses a histogram to show how sepal length is distributed
 plt.figure(figsize=(10, 6))
 sns.histplot(data=df, x='sepal_length', hue='species', kde=True, element='step')
 plt.title("Distribution of Sepal Length by Species")
 plt.show()
-
-#uses a boxplot to visualize the median and spread of sepal length
 plt.figure(figsize=(10, 6))
 sns.boxplot(x='species', y='sepal_length', data=df)
 plt.title("Boxplot of Sepal Length by Species")
