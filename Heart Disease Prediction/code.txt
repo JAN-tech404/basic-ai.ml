@@ -1,0 +1,60 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import roc_curve, roc_auc_score, confusion_matrix, accuracy_score
+from sklearn.preprocessing import StandardScaler
+df = pd.read_csv('heart.csv')
+print(df.head(6))
+print(df.isnull().sum())
+df = df.dropna()
+print(f"Duplicate rows: {df.duplicated().sum()}")
+df.drop_duplicates(inplace=True)
+sns.countplot(x='target', data=df)
+plt.title('Distribution of Disease Presence')
+plt.show()
+plt.figure(figsize=(14,12))
+sns.heatmap(
+    df.corr(), 
+    annot=True, 
+    cmap='coolwarm', 
+    fmt='.2f')
+plt.title('Correlation Matrix')
+plt.show()
+x = df.drop('target', axis=1)
+y = df['target']
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+x_train_scaled = scaler.fit_transform(x_train)
+x_test_scaled = scaler.transform(x_test)
+model = LogisticRegression()
+model.fit(x_train_scaled, y_train)
+y_pred = model.predict(x_test_scaled)
+y_prob = model.predict_proba(x_test_scaled)[:, 1]
+print(f"Accuracy: {accuracy_score(y_test, y_pred)}")
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.show()
+fpr, tpr, thresholds = roc_curve(y_test, y_prob)
+plt.plot(fpr, tpr, label=f'AUC = {roc_auc_score(y_test, y_prob):.2f}')
+plt.plot([0, 1], [0, 1], 'k--') #random guess line
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve')
+plt.legend()
+plt.show()
+feature_importance = pd.DataFrame({
+    'Feature': x.columns,
+    'Importance': model.coef_[0]
+    })
+importance = feature_importance.sort_values(by='Importance', key=abs, ascending=False)
+plt.figure(figsize=(10,6))
+sns.barplot(x='Importance', y='Feature', data=importance)
+plt.title('Feature Importance from Logistic Regression')
+plt.show()
