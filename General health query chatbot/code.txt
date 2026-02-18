@@ -1,0 +1,70 @@
+import os
+from huggingface_hub import InferenceClient
+HF_TOKEN = "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" 
+MODEL_ID = "meta-llama/Meta-Llama-3-8B-Instruct"
+client = InferenceClient(model=MODEL_ID, token=HF_TOKEN)
+def construct_prompt(user_query):
+    """PROMPT ENGINEERING:
+    This function wraps the user query in a specific structure to control
+    the persona, tone, and safety constraints of the model. """
+    system_prompt = """You are a helpful, empathetic, and clear medical assistant AI. 
+    Your goals are:
+    1. Answer general health questions clearly and simply.
+    2. Be friendly and reassuring.
+    SAFETY GUIDELINES (STRICT):
+    - You are NOT a doctor. Do not provide a diagnosis.
+    - ALWAYS start or end your response with a disclaimer: "I am an AI, not a doctor. Please consult a medical professional for advice."
+    - If the user asks about a life-threatening situation (e.g., chest pain, trouble breathing), tell them to call emergency services immediately."""
+    full_prompt = f"<s>[INST] {system_prompt}\n\nUser Question: {user_query} [/INST]"
+    return full_prompt
+def simple_safety_filter(query):
+    """A basic hard-coded filter to catch high-risk keywords before sending to LLM."""
+    emergency_keywords = ["suicide", "kill myself", "heart attack", "stroke", "dying"]
+    for word in emergency_keywords:
+        if word in query.lower():
+            return "⚠️ CRITICAL WARNING: This sounds like an emergency. Please call your local emergency number (e.g., 911 or 112) immediately."
+    return None
+def get_health_response(user_query):
+    safety_check = simple_safety_filter(user_query)
+    if safety_check:
+        return safety_check
+    system_message = (
+        "You are a helpful medical assistant. "
+        "Do not provide a diagnosis. ALWAYS include a disclaimer that you are an AI. "
+        "If the user mentions an emergency, tell them to call 911."
+    )
+    try:
+        response = client.chat_completion(
+            model=MODEL_ID, 
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_query},
+            ],
+            max_tokens=300,
+            temperature=0.7
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Error connecting to model: {e}"
+if __name__ == "__main__":
+    CYAN = "\033[96m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    END = "\033[0m"
+    print(f"{CYAN}{BOLD}--- 🏥 General Health Chatbot (Llama-3) ---{END}")
+    print(f"{YELLOW}Note: This bot provides general info only.{END}")
+    print("Type 'exit' to quit.\n")
+    while True:
+        user_input = input(f"{BOLD}You:{END} ") 
+        if user_input.lower() in ["exit", "quit"]:
+            print(f"{CYAN}Stay healthy! Goodbye.{END}")
+            break
+        print(f"\n{CYAN}⏳ Bot is thinking...{END}")
+        answer = get_health_response(user_input)
+        print("="*60)
+        print(f"{BOLD}Health Assistant Information:{END}")
+        print(f"{answer}")
+        print("="*60)
+        print(f"{RED}{BOLD}⚠️ CAUTION:{END} {RED}If you are experiencing a medical emergency ")
+        print(f"(chest pain, difficulty breathing, etc.), call 911 immediately.{END}\n")
