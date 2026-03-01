@@ -1,4 +1,4 @@
-🚀 Data Science & AI Task Portfolio
+🚀 Hello World of Data Science & AI
 
 This repository contains a collection of four Jupyter Notebook (.ipynb) projects focused on Exploratory Data Analysis (EDA), Natural Language Processing (NLP), and Predictive Machine Learning.
 📌 Projects Overview
